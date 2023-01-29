@@ -2,5 +2,24 @@ version: "3.8"
 services:
   app:
     build: .
+    enviroment:
+      APP_TRANSPORT_PORT:
+
+      APP_REPOSITORY_USER: "postgres"
+      APP_REPOSITORY_PASSWORD: "password"
+      APP_REPOSITORY_HOST: "postgres"
+      APP_REPOSITORY_DATABASE: "pgdb"
     ports:
       - "3000:3000"
+
+  postgres:
+    image: postgres:14.2
+    enviroment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "pgdb"
+    volumes:
+      - ./migrations/postgres_data: /var/lib/postgresql/data
+      - ./migrations/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
