@@ -9,7 +9,8 @@ RUN pip install --default-timeout=1000 --no-cache-dir --upgrade pip \
 
 COPY src/ src/
 
-RUN alembic revision --autogenerate -m 'add users table'
+#RUN alembic init migrations
+#RUN alembic revision --autogenerate -m 'add users table'
 RUN alembic upgrade head
 
 ENTRYPOINT ["python", "-u", "-m", "src"]
