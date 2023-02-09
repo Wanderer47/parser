@@ -1,18 +1,14 @@
-from pydantic_settings import BaseSettingsModel, load_settings
+from pydantic import BaseSettings
 
 
-class RepositorySettings(BaseSettingsModel):
+class RepositorySettings(BaseSettings):
     user: str = 'postgres'
     password: str = 'password'
-    host: str = 'localhost'
+    host: str = 'postgres'
     database: str = 'postgres'
 
-class AppSettings(BaseSettingsModel):
+class AppSettings(BaseSettings):
     repository: RepositorySettings
 
     class Config:
         env_prefix = 'APP'
-
-    @classmethod
-    def load(cls):
-        return load_settings(cls=cls, load_env=True)
