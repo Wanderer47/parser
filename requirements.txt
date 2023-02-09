@@ -2,4 +2,6 @@ selenium == 4.7.2
 aiohttp == 3.8.3
 beautifulsoup4 == 4.11.1
 aiopg == 1.4.0
-pydantic-settings==0.2.5
+alembic == 1.9.2
+SQLAlchemy == 2.0.1
+pydantic == 1.10.4
