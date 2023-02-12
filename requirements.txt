@@ -1,6 +1,7 @@
 selenium == 4.7.2
 aiohttp == 3.8.3
 beautifulsoup4 == 4.11.1
+lxml == 4.9.2
 aiopg == 1.4.0
 alembic == 1.9.2
 SQLAlchemy == 2.0.1

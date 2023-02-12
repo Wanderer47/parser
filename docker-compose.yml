@@ -2,6 +2,7 @@ version: "3.8"
 services:
   app:
     build: .
+    command: bash -c "alembic upgread head"
     environment:
       APP_REPOSITORY_USER: "postgres"
       APP_REPOSITORY_PASSWORD: "password"
