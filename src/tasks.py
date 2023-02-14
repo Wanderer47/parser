@@ -15,7 +15,7 @@ async def certificate_taxi():
         company: str = str(req.select_one("p.body2").string)
         phone: str = str(req.select("p.body2.icon-list-item_text__jP3Nc")[1].string)
         addres: str = str(req.select("p.body2.icon-list-item_text__jP3Nc")[2].string)
-        print(company, ' + ', addres, ' + ', phone, type(company))
+        print(company, ' + ', addres, ' + ', phone)
 
 
-asyncio.run(certificate_taxi())
+#asyncio.run(certificate_taxi())

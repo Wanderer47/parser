@@ -1,13 +1,15 @@
 version: "3.8"
 services:
   app:
+    restart: always
     build: .
-    command: bash -c "alembic upgread head"
     environment:
       APP_REPOSITORY_USER: "postgres"
       APP_REPOSITORY_PASSWORD: "password"
       APP_REPOSITORY_HOST: "postgres"
       APP_REPOSITORY_DATABASE: "pgdb"
+    depends_on:
+      - postgres
 
   postgres:
     image: postgres:14.2
@@ -16,4 +18,6 @@ services:
       POSTGRES_PASSWORD: "password"
       POSTGRES_DB: "pgdb"
     ports:
-      - "5432:5432"
+      - "5432:5432" 
+  
+
