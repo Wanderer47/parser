@@ -13,7 +13,3 @@ COPY src/ src/
 RUN mkdir -p migrations/
 COPY alembic.ini .
 COPY migrations/ migrations/
-RUN alembic revision --autogenerate -m "Added table"
-RUN alembic upgrade head
-
-ENTRYPOINT ["python", "-u", "-m", "src"]
