@@ -1,12 +1,8 @@
-import asyncio
 import time
 
 import aiohttp
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.by import By
 
 
@@ -31,11 +27,14 @@ async def city_partners():
     print('[+] Start city partners parsing...')
 
     parks_list: list[str] = ['1956789345', '400000047422']
+
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    options.add_argument("window-size=1920x1080")
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-gpu')
+    driver = webdriver.Chrome(options=options)
     
-    options = Options()
-    options.add_argument('--headless')
-    service = Service(GeckoDriverManager().install())
-    driver = webdriver.Firefox(service=service, options=options)
     driver.get("https://taxi.yandex.ru/moscow/parks")
     time.sleep(2)
     
@@ -73,7 +72,7 @@ async def city_partners():
             ogrn: str
 
             for info_tag in req.select('span'):
-                print(info_tag.text.split(maxsplit=1))
+                #print(info_tag.text.split(maxsplit=1))
                 if(info_tag.text.split(maxsplit=1)[0] == 'ОГРН:'):
                     ogrn: str = info_tag.text.split(maxsplit=1)[1]
                 elif(info_tag.text.split(maxsplit=1)[0] == 'ИНН:'):
