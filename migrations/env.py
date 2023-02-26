@@ -11,7 +11,7 @@ from src.models import metadata_obj
 # access to the values within the .ini file in use.
 config = context.config
 
-config.set_main_option('sqlalchemy.url', 'postgresql+psycopg2://postgres:password@postgres:5432/pgdb')
+# config.set_main_option('sqlalchemy.url', 'postgresql://postgres:password@postgres:5432/pgdb')
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

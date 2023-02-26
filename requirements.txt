@@ -6,3 +6,4 @@ aiopg == 1.4.0
 alembic == 1.9.2
 SQLAlchemy == 2.0.1
 pydantic == 1.10.4
+webdriver-manager

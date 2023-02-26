@@ -1,10 +1,10 @@
 version: "3.8"
 services:
   app:
-    restart: always
     build: .
-    command: bash -c "alembic revision --autogenerate -m \"Added table\""
-    command: bash -c "alembic upgrade head && python src"
+    volumes:
+      - ./migrations:/app/migrations
+    command: bash -c "alembic upgrade head && python3.10 src"
     environment:
       APP_REPOSITORY_USER: "postgres"
       APP_REPOSITORY_PASSWORD: "password"
@@ -21,3 +21,4 @@ services:
       POSTGRES_DB: "pgdb"
     ports:
       - "5432:5432" 
+
