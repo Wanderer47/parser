@@ -8,7 +8,7 @@ class RepositorySettings(BaseSettings):
     database: str = 'postgres'
 
 class AppSettings(BaseSettings):
-    repository: RepositorySettings
+    repository: RepositorySettings = RepositorySettings()
 
     class Config:
         env_prefix = 'APP'

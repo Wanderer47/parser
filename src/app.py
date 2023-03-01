@@ -1,11 +1,12 @@
-from aiopg import connect
-from aiopg.connection import Connection, Cursor
+from aiopg.sa import create_engine
+from aiopg.sa import Engine, SAConnection
+
 
 from settings import AppSettings
 
 
 class Application:
-    repository: Connection
+    repository: Engine
     settings: AppSettings
 
     def __init__(self, settings: AppSettings):
@@ -15,14 +16,16 @@ class Application:
         settings = self.settings.repository
         return f"postgresql://{settings.user}:{settings.password}@{settings.host}:5432/{settings.database}"
 
-    async def db_connect(self):
-        self.repository = await connect(**self.settings.repository.dict())
+    async def db_engine(self):
+        async with create_engine(**self.settings.repository.dict()) as engine:
+            self.repository = engine
 
     async def db_disconnect(self):
-        await self.repository.close()
+        await self.repository.wait_closed()
 
-    async def db_get_cursor(self) -> Cursor:
-        return await self.repository.cursor()
+    async def db_get_connect(self) -> SAConnection:
+        async with self.repository.acquire() as conn:
+            return conn
 
-settings = AppSettings.load()
+settings = AppSettings()
 application = Application(settings)

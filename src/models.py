@@ -5,18 +5,18 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
-#class certified_taxi_drivers(Base):
-#    __tablename__ = "certified_taxi_drivers"
-#
-#    id = Column(Integer, primary_key=True)
-#    region = Column(String)
-#    name = Column(String)
-#    phone = Column(Integer)
-#    addres = Column(String)
+class certified_taxi_drivers(Base):
+    __tablename__ = "certified_taxi_drivers"
+
+    id = Column(Integer, primary_key=True)
+    region = Column(String)
+    name = Column(String)
+    phone = Column(String)
+    addres = Column(String)
 
 metadata_obj = MetaData()
 
-cert_taxi_drivers = Table(
+cert_taxi_drivers_meta_data = Table(
         "certified_taxi_drivers",
         metadata_obj,
         Column("id", Integer, primary_key=True),
