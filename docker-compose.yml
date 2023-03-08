@@ -4,6 +4,7 @@ services:
     build: .
     volumes:
       - ./migrations:/app/migrations
+      - ./results:/app/results
     command: bash -c "alembic upgrade head && python3.10 src"
     environment:
       APP_REPOSITORY_USER: "postgres"

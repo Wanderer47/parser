@@ -5,43 +5,48 @@ import aiohttp
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import pandas as pd
 
-from app import application
-from repository import CertificateTaxiRepository
+#from app import application
+#from repository import CertificateTaxiRepository
 from models import  certified_taxi_drivers
 
 
 logger = logging.getLogger(__name__)
 
 async def certificate_taxi():
-    logger.debug('[+] Start certified taxi drivers parsing...')
+    logger.info('[+] Start certified taxi drivers parsing...')
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get('https://pro.yandex.ru/ru-ru/moskva/knowledge-base/taxi/common/parks') as resp:
-            html_code: str = await resp.text()
+    regions: list[str] = ['moskva']
+    
+    for region in regions:
 
-    soup = BeautifulSoup(html_code,'lxml')
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks') as resp:
+                html_code: str = await resp.text()
 
-    connector = await application.db_get_connect()
+        soup = BeautifulSoup(html_code,'lxml')
 
-    for req in soup.select("div.accordion_accordion__7KkXQ"):
-        company: str = str(req.select_one("p.body2").string)
-        phone: str = str(req.select("p.body2.icon-list-item_text__jP3Nc")[1].string)
-        addres: str = str(req.select("p.body2.icon-list-item_text__jP3Nc")[2].string)
-        #print(company, ' + ', addres, ' + ', phone)
-        cert_drivers = certified_taxi_drivers(
-                region = 'Москва',
-                name = company,
-                phone = phone,
-                addres = addres
-                )
+        csv_res_path = f'/app/results/certificate_taxi/{region}.csv'
+        open(csv_res_path, 'a').close()
+        certificate_taxi_list = []
 
-        await CertificateTaxiRepository.add_data(connector, cert_drivers)
+        for req in soup.select("div.accordion_accordion__7KkXQ"):
+            company: str = str(req.select_one("p.body2").string)
+            phone: str = str(req.select("p.body2.icon-list-item_text__jP3Nc")[1].string)
+            addres: str = str(req.select("p.body2.icon-list-item_text__jP3Nc")[2].string)
 
-    logger.debug('[+] All information about certified taxis has been obtained...')
+            cert_drivers = certified_taxi_drivers(company, phone, addres)
+            certificate_taxi_list.append(cert_drivers.to_dict())
+        
+        with open(csv_res_path, 'w') as file:
+            df = pd.DataFrame(certificate_taxi_list, columns=['name', 'phone', 'addres'])
+            df.to_csv(path_or_buf=file)
+
+    logger.info('[+] All information about certified taxis has been obtained...')
 
 async def city_partners():
-    logger.debug('[+] Start city partners parsing...')
+    logger.info('[+] Start city partners parsing...')
 
     parks_list: list[str] = ['1956789345', '400000047422']
 
@@ -78,7 +83,7 @@ async def city_partners():
         
     for park in parks_list:
         async with aiohttp.ClientSession() as session:
-            async with session.get('https://taxi.yandex.ru/moscow/parks/' + park) as resp:
+            async with session.get('https://taxi.yandex.ru/' + 'moscow' + '/parks/' + park) as resp:
                 html_code: str = await resp.text()
 
         soup = BeautifulSoup(html_code,'lxml')

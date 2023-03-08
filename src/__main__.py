@@ -21,12 +21,12 @@ loop = asyncio.get_event_loop()
 
 try:
     loop.run_until_complete(main())
+
 finally:
     pending = asyncio.all_tasks(loop)
 
     if pending:
         loop.run_until_complete(asyncio.gather(*pending))
 
-    main_logger.debug('[+] Closing the event loop...')
+    main_logger.info('[+] Closing the event loop...')
     loop.close()
-

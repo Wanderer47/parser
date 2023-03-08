@@ -6,7 +6,8 @@ from models import cert_taxi_drivers_meta_data as cert_drivers_meta
 
 class CertificateTaxiRepository():
     @classmethod
-    async def add_data(cls, connector: SAConnection, cert_drivers: cert_drivers):
+    async def add_data(cls, connector, cert_drivers: cert_drivers):
+        print('====>', cert_drivers.phone)
         connector.execute(cert_drivers_meta.insert().values(
             region = cert_drivers.region,
             name = cert_drivers.name,
