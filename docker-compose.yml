@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    volumes:
+      - ./migrations:/app/migrations
+      - ./results:/app/results
+    command: bash -c "alembic upgrade head && python3.10 src"
+    environment:
+      APP_REPOSITORY_USER: "postgres"
+      APP_REPOSITORY_PASSWORD: "password"
+      APP_REPOSITORY_HOST: "postgres"
+      APP_REPOSITORY_DATABASE: "pgdb"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14.2
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "pgdb"
+    ports:
+      - "5432:5432" 
+
