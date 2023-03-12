@@ -9,7 +9,7 @@ main_logger = logging.getLogger(__name__)
 async def main():
     try:
         await certificate_taxi()
-        #await city_partners()
+        await city_partners()
     except Exception as err:
         main_logger.info(f"[-] Err starting app: {str(err)}")
 
