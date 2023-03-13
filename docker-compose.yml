@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    volumes:
+      - ./results:/app/results
+    command: bash -c "python3.10 src"
