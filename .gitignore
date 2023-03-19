@@ -3,5 +3,5 @@ __pycache__/
 venv
 env
 
-results/certificate_taxi/
-results/city_partners/
+results/certificate_taxi/*
+results/city_partners/*
