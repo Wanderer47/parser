@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Optional
+from typing import Optional, Generator
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -23,6 +23,9 @@ async def certificate_taxi():
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks') as resp:
                 html_code: str = await resp.text()
+                if "Internal server error" in html_code:
+                    await certificate_taxi()
+                    return
 
         soup = BeautifulSoup(html_code,'lxml')
 
@@ -85,8 +88,9 @@ async def city_partners():
         open(csv_res_path, 'a').close()
 
         city_partners_list = []
-
-        for park in parks_list:
+        
+        parks_list_generator: Generator = (park for park in parks_list)
+        for park in parks_list_generator:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f'https://taxi.yandex.ru/{region}/parks/{park}') as resp:
                     html_code: str = await resp.text()
