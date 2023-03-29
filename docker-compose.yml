@@ -4,4 +4,3 @@ services:
     build: .
     volumes:
       - ./results:/app/results
-        #    command: bash -c "python3.10 src"

@@ -8,12 +8,8 @@ class certified_taxi_drivers():
     phone: str
     addres: str
 
-    def to_dict(self) -> dict[str, str]:
-        return{
-                'name': self.name,
-                'phone': self.phone,
-                'addres': self.addres
-                }
+    def to_list(self) -> list[str]:
+        return [self.name, self.phone, self.addres]
 
 @dataclass
 class city_partners_organizatons():
@@ -22,11 +18,6 @@ class city_partners_organizatons():
     ogrn: Optional[str]
     inn: Optional[str]
 
-    def to_dict(self) -> dict[Optional[str], Optional[str]]:
-        return{
-                'name': self.name,
-                'full_name': self.full_name,
-                'ogrn': self.ogrn,
-                'inn': self.inn
-                }
+    def to_list(self) -> list[Optional[str]]:
+        return [self.name, self.full_name, self.ogrn, self.inn]
 
