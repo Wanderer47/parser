@@ -1,15 +1,15 @@
 import asyncio
 import logging
 
-#from tasks import certificate_taxi, city_partners
 from parsing_services import certificate_taxi, city_partners, add_in_the_file
 
 
 logger = logging.getLogger(__name__)
 
+
 async def main():
     try:
-        #await certificate_taxi(add_in_the_file)
+        await certificate_taxi(add_in_the_file)
         await city_partners()
     except Exception as err:
         logger.info(f"[-] Err starting app: {str(err)}")
