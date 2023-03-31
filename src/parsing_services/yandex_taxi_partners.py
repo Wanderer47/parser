@@ -47,7 +47,7 @@ async def city_partners():
             park_links = (park for park in driver.find_elements(
                 by=By.CLASS_NAME, value="Park__link"
                 ))
-            
+
             for park in park_links:
                 """Get park id and name after then add to the list"""
                 parks_list.append((
