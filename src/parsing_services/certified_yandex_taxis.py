@@ -10,13 +10,19 @@ from models import certified_taxi_drivers
 
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+        filename='{log_path}cert_ya_taxi.log'.format(
+            log_path=environ['PARSER_LOGS']),
+        filemode='w',
+        level=logging.DEBUG
+        )
 
 REGIONS_LIST: list[str] = ['moskva']
 URL = 'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks'
 
 
 async def certificate_taxi(add_in_the_file):
-    logger.info('[+] Start certified taxi drivers parsing...')
+    logger.debug('[+] Start certified taxi drivers parsing...')
 
     for region in REGIONS_LIST:
         await session_status_and_code(region)
@@ -59,4 +65,5 @@ async def add_in_the_file(html_code, region):
                       columns=['name', 'phone', 'addres'])
     df.to_csv(path_or_buf=csv_res_path)
 
-    logger.info('[+] All information about certified taxis has been obtained...')
+    logger.debug('[+] All information about certified taxis \
+            has been obtained...')

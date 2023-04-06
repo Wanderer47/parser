@@ -4,3 +4,4 @@ services:
     build: .
     volumes:
       - ./results:/app/results
+      - ./logs:/app/logs
