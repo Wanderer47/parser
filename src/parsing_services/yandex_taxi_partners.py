@@ -10,7 +10,8 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 import pandas as pd
 
-from models import city_partners_organizatons
+from models import City_partners_organizatons
+from tasks import analyzer
 
 
 logger = logging.getLogger(__name__)
@@ -102,24 +103,19 @@ async def get_data_from_park_id(park_id_gen, region):
                 elif (info_tag.text.split(maxsplit=1)[0] == 'ИНН:'):
                     inn = info_tag.text.split(maxsplit=1)[1]
 
-        data = city_partners_organizatons(
+        data = City_partners_organizatons(
                 organization_id,
                 organization_name,
                 organization_full_name,
                 ogrn,
                 inn
                 )
-        yield data.to_list()
+        yield data.to_dict()
         logger.debug('[+] add to list')
 
 
-async def wright_to_file(data_to_list_gen, region):
+async def wright_to_file(data_to_dict_gen, region):
     csv_res_path = environ['RESULTS_YA_TAXI_PARTNERS'] + f'{region}.csv'
-    """ If there is no .csv file, then we create it """
-    open(csv_res_path, 'a').close()
-    logger.info('created .csv file')
-
-    open(csv_res_path, 'w').close()  # Clearing .csv file
 
     df = pd.DataFrame(columns=[
                               'PARK_ID',
@@ -127,30 +123,37 @@ async def wright_to_file(data_to_list_gen, region):
                               'FULL NAME',
                               'OGRN',
                               'INN'
-                              ])
+                              ]
+                      )
 
-    async for data in data_to_list_gen:
-        df_new = pd.DataFrame([data],
-                              columns=[
-                                  'PARK_ID',
-                                  'NAME',
-                                  'FULL NAME',
-                                  'OGRN',
-                                  'INN'
-                                  ])
-        df = pd.concat([df, df_new], ignore_index=True)
+    df_no_duplicates: pd.DataFrame | None = None
+    async for data in data_to_dict_gen:
+        data_normalize = pd.json_normalize(data)
 
-    df.drop_duplicates()
-    logger.debug(f'add data on pandas data frame {df}')
-    df.to_csv(path_or_buf=csv_res_path)
+        df = pd.concat([df, data_normalize], ignore_index=True)
+
+        df_no_duplicates = df.drop_duplicates(
+                                            subset='PARK_ID',
+                                            keep="first",
+                                            ignore_index=True
+                                            )
+        logger.debug(f'[+] Add data on pandas data frame {df}')
+
+    if df_no_duplicates is not None:
+        # If there is no .csv file, then we create it
+        open(csv_res_path, 'a').close()
+        logger.info('[+] Created .csv file')
+
+        analyzer(csv_res_path, df_no_duplicates, logger)
+
+        open(csv_res_path, 'w').close()  # Clearing .csv file
+        df_no_duplicates.to_csv(path_or_buf=csv_res_path, index=False)
+    else:
+        logger.debug('[+] Empty DataFrame')
 
 
 async def start_parsing():
     for region in REGIONS_LIST:
-        await wright_to_file(
-                get_data_from_park_id(
-                    get_park_id_and_name_gen(region),
-                    region
-                    ),
-                region
-                )
+        park_id_and_name = get_park_id_and_name_gen(region)
+        data = get_data_from_park_id(park_id_and_name, region)
+        await wright_to_file(data, region)

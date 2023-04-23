@@ -3,22 +3,32 @@ from dataclasses import dataclass
 
 
 @dataclass
-class certified_taxi_drivers():
+class Certified_taxi_drivers():
     name: Optional[str]
     phone: Optional[str]
     addres: Optional[str]
 
-    def to_list(self) -> list[Optional[str]]:
-        return [self.name, self.phone, self.addres]
+    def to_dict(self) -> dict[Optional[str], Optional[str]]:
+        return {
+                'NAME': self.name,
+                'PHONE': self.phone,
+                'ADDRESS': self.addres
+                }
 
 
 @dataclass
-class city_partners_organizatons():
+class City_partners_organizatons():
     id: Optional[str]
     name: Optional[str]
     full_name: Optional[str]
     ogrn: Optional[str]
     inn: Optional[str]
 
-    def to_list(self) -> list[Optional[str]]:
-        return [self.id, self.name, self.full_name, self.ogrn, self.inn]
+    def to_dict(self) -> dict[Optional[str], Optional[str]]:
+        return {
+                'PARK_ID': self.id,
+                'NAME': self.name,
+                'FULL_NAME': self.full_name,
+                'OGRN': self.ogrn,
+                'INN': self.inn
+                }

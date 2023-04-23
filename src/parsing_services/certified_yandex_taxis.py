@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import logging
 
-from models import certified_taxi_drivers
+from models import Certified_taxi_drivers
 
 
 logger = logging.getLogger(__name__)
@@ -58,11 +58,11 @@ async def add_in_the_file(html_code, region):
         addres = str(
                 req.select("p.body2.icon-list-item_text__jP3Nc")[2].string)
 
-        cert_drivers = certified_taxi_drivers(company, phone, addres)
-        certificate_taxi_list.append(cert_drivers.to_list())
+        cert_drivers = Certified_taxi_drivers(company, phone, addres)
+        certificate_taxi_list.append(cert_drivers.to_dict())
 
     df = pd.DataFrame(certificate_taxi_list,
-                      columns=['name', 'phone', 'addres'])
+                      columns=['NAME', 'PHONE', 'ADDRESS'])
     df.to_csv(path_or_buf=csv_res_path)
 
     logger.debug('[+] All information about certified taxis \

@@ -3,5 +3,6 @@ services:
   app:
     build: .
     volumes:
-      - ./results:/app/results
+      - ./results/certificate_taxi:/app/results/certificate_taxi
+      - ./results/city_partners:/app/results/city_partners
       - ./logs:/app/logs
