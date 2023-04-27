@@ -1,9 +1,17 @@
 import asyncio
 import logging
+from os import environ
 
 from parsing_services import certificate_taxi, add_in_the_file, start_parsing
 
 
+logging.basicConfig(
+        filename='{log_path}parser.log'.format(
+            log_path=environ['PARSER_LOGS']),
+        filemode='w',
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s : %(message)s'
+        )
 logger = logging.getLogger(__name__)
 
 

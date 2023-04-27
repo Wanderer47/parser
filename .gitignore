@@ -6,4 +6,4 @@ env
 .vim
 
 results
-logs
+logs/

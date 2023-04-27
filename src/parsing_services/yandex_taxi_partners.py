@@ -15,12 +15,6 @@ from tasks import analyzer
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-        filename='{log_path}ya_taxi_partners.log'.format(
-            log_path=environ['PARSER_LOGS']),
-        filemode='w',
-        level=logging.DEBUG
-        )
 
 REGIONS_LIST: list[str] = ['moscow']
 URL_REGION = "https://taxi.yandex.ru/{region}/parks"
@@ -70,7 +64,7 @@ async def get_park_id_and_name_gen(region):
                     "return arguments[0].scrollHeight",
                     scroll_bar_element)
         else:
-            logger.debug('[+] Found all partners id...')
+            logger.info('[+] Finish city partners parsing...')
             break
 
     driver.close()
@@ -111,7 +105,7 @@ async def get_data_from_park_id(park_id_gen, region):
                 inn
                 )
         yield data.to_dict()
-        logger.debug('[+] add to list')
+        logger.info('[+] Add to list')
 
 
 async def wright_to_file(data_to_dict_gen, region):
@@ -120,7 +114,7 @@ async def wright_to_file(data_to_dict_gen, region):
     df = pd.DataFrame(columns=[
                               'PARK_ID',
                               'NAME',
-                              'FULL NAME',
+                              'FULL_NAME',
                               'OGRN',
                               'INN'
                               ]
@@ -137,7 +131,6 @@ async def wright_to_file(data_to_dict_gen, region):
                                             keep="first",
                                             ignore_index=True
                                             )
-        logger.debug(f'[+] Add data on pandas data frame {df}')
 
     if df_no_duplicates is not None:
         # If there is no .csv file, then we create it
@@ -149,7 +142,7 @@ async def wright_to_file(data_to_dict_gen, region):
         open(csv_res_path, 'w').close()  # Clearing .csv file
         df_no_duplicates.to_csv(path_or_buf=csv_res_path, index=False)
     else:
-        logger.debug('[+] Empty DataFrame')
+        logger.info('[+] Empty DataFrame')
 
 
 async def start_parsing():
