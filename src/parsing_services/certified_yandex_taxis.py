@@ -7,6 +7,7 @@ import pandas as pd
 import logging
 
 from models import Certified_taxi_drivers
+from tasks import Analyzer
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,6 @@ async def add_in_the_file(html_code, region):
     soup = BeautifulSoup(html_code, 'lxml')
 
     csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + f'{region}.csv'
-    open(csv_res_path, 'a').close()
     certificate_taxi_list = []
 
     for req in soup.select("div.accordion_accordion__7KkXQ"):
@@ -57,6 +57,14 @@ async def add_in_the_file(html_code, region):
 
     df = pd.DataFrame(certificate_taxi_list,
                       columns=['NAME', 'PHONE', 'ADDRESS'])
-    df.to_csv(path_or_buf=csv_res_path)
+
+    open(csv_res_path, 'a').close()
+
+    analyzer = Analyzer(csv_res_path, df, logger)
+    analyzer.get_differents()
+
+    open(csv_res_path, 'w').close()
+
+    df.to_csv(path_or_buf=csv_res_path, index=False)
 
     logger.info('[+] Finish certified taxi drivers parsing...')

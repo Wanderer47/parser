@@ -8,10 +8,11 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import StaleElementReferenceException
 import pandas as pd
 
 from models import City_partners_organizatons
-from tasks import analyzer
+from tasks import Analyzer
 
 
 logger = logging.getLogger(__name__)
@@ -137,7 +138,8 @@ async def wright_to_file(data_to_dict_gen, region):
         open(csv_res_path, 'a').close()
         logger.info('[+] Created .csv file')
 
-        analyzer(csv_res_path, df_no_duplicates, logger)
+        analyzer = Analyzer(csv_res_path, df_no_duplicates, logger)
+        analyzer.get_differents()
 
         open(csv_res_path, 'w').close()  # Clearing .csv file
         df_no_duplicates.to_csv(path_or_buf=csv_res_path, index=False)
