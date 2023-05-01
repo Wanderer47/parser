@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import StaleElementReferenceException
 import pandas as pd
 
 from models import City_partners_organizatons

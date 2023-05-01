@@ -19,17 +19,37 @@ URL = 'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks'
 async def certificate_taxi(add_in_the_file):
     logger.info('[+] Start certified taxi drivers parsing...')
 
+    csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + 'all_partners.csv'
+    all_df = pd.DataFrame(columns=['NAME', 'PHONE', 'ADDRESS'])
+
     for region in REGIONS_LIST:
-        await session_status_and_code(region)
+        df = await session_status_and_code(region)
+        all_df = pd.concat([all_df, df], ignore_index=True)
+
+        all_df_no_duplicates = all_df.drop_duplicates(
+                                            keep="first",
+                                            ignore_index=True
+                                            )
+
+        open(csv_res_path, 'a').close()
+
+        analyzer = Analyzer(csv_res_path, all_df_no_duplicates, logger)
+        analyzer.get_differents()
+
+        open(csv_res_path, 'w').close()
+
+        all_df_no_duplicates.to_csv(path_or_buf=csv_res_path, index=False)
 
 
 async def session_status_and_code(region):
     """Accessing the page until the html code of the page is received."""
     async with aiohttp.ClientSession() as session:
         async with session.get(URL.format(region=region)) as resp:
+            if int(resp.status) == 404:
+                return
             if int(resp.status) != 500:
                 html_code: str = await resp.text()
-                await add_in_the_file(html_code, region)
+                return await add_in_the_file(html_code, region)
             else:
                 await session_status_and_code(region)
 
@@ -68,3 +88,5 @@ async def add_in_the_file(html_code, region):
     df.to_csv(path_or_buf=csv_res_path, index=False)
 
     logger.info('[+] Finish certified taxi drivers parsing...')
+
+    return df
