@@ -2,7 +2,7 @@ import asyncio
 import logging
 from os import environ
 
-from parsing_services import certificate_taxi, add_in_the_file, start_parsing
+from providers import certificate_taxi, add_in_the_file, start_parsing
 
 
 logging.basicConfig(

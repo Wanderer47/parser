@@ -4,12 +4,14 @@ from dataclasses import dataclass
 
 @dataclass
 class Certified_taxi_drivers():
+    region: Optional[str]
     name: Optional[str]
     phone: Optional[str]
     addres: Optional[str]
 
     def to_dict(self) -> dict[Optional[str], Optional[str]]:
         return {
+                'REGION': self.region,
                 'NAME': self.name,
                 'PHONE': self.phone,
                 'ADDRESS': self.addres
