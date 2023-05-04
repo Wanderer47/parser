@@ -19,6 +19,10 @@ RUN mkdir -p $RESULTS_YA_TAXI_PARTNERS
 ENV PARSER_LOGS /app/logs/
 RUN mkdir -p $PARSER_LOGS
 
+# contains files with a list of regions
+ENV REGIONS /app/regions/
+RUN mkdir -p $REGIONS
+
 # install google chrome
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'

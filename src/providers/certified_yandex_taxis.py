@@ -12,7 +12,12 @@ from tasks import Analyzer
 
 logger = logging.getLogger(__name__)
 
-REGIONS_LIST = ['moskva']
+with open('{regions_path}certified_regions_list.txt'.format(
+                                            regions_path=environ['REGIONS']
+                                                            ), 'r') as regions:
+    REGIONS_LIST = regions.read().split('\n')
+
+#REGIONS_LIST = ['moskva']
 URL = 'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks'
 
 

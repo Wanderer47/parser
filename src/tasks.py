@@ -24,7 +24,7 @@ class Analyzer:
                             )
         except Exception:
             old_df = self.df
-            self.logger.exception(
+            self.logger.info(
                     '[+] The old file is either empty or does not exist.')
         new_df = self.df
 
