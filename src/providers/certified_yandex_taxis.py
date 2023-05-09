@@ -12,13 +12,14 @@ from tasks import Analyzer
 
 logger = logging.getLogger(__name__)
 
-with open('{regions_path}certified_regions_list.txt'.format(
-                                            regions_path=environ['REGIONS']
-                                                            ), 'r') as regions:
-    REGIONS_LIST = regions.read().split('\n')
-
 #REGIONS_LIST = ['moskva']
+REGIONS_FILE_NAME = 'certified_regions_list.txt'
 URL = 'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks'
+with open('{regions_path}{regions_file_name}'.format(
+                                        regions_path=environ['REGIONS'],
+                                        regions_file_name=REGIONS_FILE_NAME
+                                                        ), 'r') as regions:
+    REGIONS_LIST = regions.read().split('\n')
 
 
 async def certificate_taxi(add_in_the_file) -> None:
@@ -32,23 +33,23 @@ async def certificate_taxi(add_in_the_file) -> None:
         if df is not None:
             all_df = pd.concat([all_df, df], ignore_index=True)
 
-            all_df_no_duplicates = all_df.drop_duplicates(
-                                                keep="first",
-                                                ignore_index=True
-                                                )
+    all_df_no_duplicates = all_df.drop_duplicates(
+                                        keep="first",
+                                        ignore_index=True
+                                        )
 
-            if all_df_no_duplicates is not None:
-                open(csv_res_path, 'a').close()
+    if all_df_no_duplicates is not None:
+        open(csv_res_path, 'a').close()
 
-                analyzer = Analyzer(csv_res_path, all_df_no_duplicates, logger)
-                analyzer.get_differents()
+        analyzer = Analyzer(csv_res_path, all_df_no_duplicates, logger)
+        analyzer.get_differents()
 
-                open(csv_res_path, 'w').close()
+        open(csv_res_path, 'w').close()
 
-                all_df_no_duplicates.to_csv(
-                                            path_or_buf=csv_res_path,
-                                            index=False
-                                            )
+        all_df_no_duplicates.to_csv(
+                                    path_or_buf=csv_res_path,
+                                    index=False
+                                    )
 
 
 async def session_status_and_code(region) -> pd.DataFrame | None:
@@ -56,7 +57,13 @@ async def session_status_and_code(region) -> pd.DataFrame | None:
     async with aiohttp.ClientSession() as session:
         async with session.get(URL.format(region=region)) as resp:
             if int(resp.status) == 404:
-                return
+                logging.info(f'status 404: {region}')
+                df = None
+                return df
+            if len(resp.history) != 0 and int(resp.history[0].status) == 302:
+                logging.info(f'status 302: {region}')
+                df = None
+                return df
             if int(resp.status) != 500:
                 content: str = await resp.text()
                 return await add_in_the_file(content, region)
@@ -86,21 +93,6 @@ async def add_in_the_file(content, region) -> pd.DataFrame:
 
     df = pd.DataFrame(certificate_taxi_list,
                       columns=['REGION', 'NAME', 'PHONE', 'ADDRESS'])
-
-    """
-    If you want to withdraw partners for each city separately, then uncomment.
-    """
-    """
-    csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + f'{region}.csv'
-    open(csv_res_path, 'a').close()
-
-    analyzer = Analyzer(csv_res_path, df, logger)
-    analyzer.get_differents()
-
-    open(csv_res_path, 'w').close()
-
-    df.to_csv(path_or_buf=csv_res_path, index=False)
-    """
 
     logger.info('[+] Finish certified taxi drivers parsing...')
 

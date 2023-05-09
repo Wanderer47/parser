@@ -20,7 +20,7 @@ async def main():
         await certificate_taxi(add_in_the_file)
         await start_parsing()
     except Exception as err:
-        logger.info(f"[-] Err starting app: {str(err)}")
+        logger.exception(f"[-] Err starting app: {str(err)}")
 
 loop = asyncio.get_event_loop()
 
