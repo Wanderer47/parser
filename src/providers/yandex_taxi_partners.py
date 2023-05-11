@@ -2,6 +2,7 @@ import time
 from typing import Optional, Generator, AsyncGenerator
 import logging
 from os import environ
+from dataclasses import asdict
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -21,7 +22,8 @@ URL_REGION = "https://taxi.yandex.ru/{region}/parks"
 URL_PARK = "https://taxi.yandex.ru/{region}/parks/{park}"
 
 
-async def get_park_id_and_name(region):
+async def get_park_id_and_name(region) -> \
+                                        AsyncGenerator[tuple[str, str], None]:
     logger.info('[+] Start city partners parsing...')
 
     """ Initialization chrome webdriver. """
@@ -75,7 +77,8 @@ async def get_park_id_and_name(region):
     driver.close()
 
 
-async def get_data_from_park_id(park_id, region):
+async def get_data_from_park_id(park_id, region) -> \
+                                        AsyncGenerator[dict[str, str], None]:
     async for park in park_id:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -107,19 +110,19 @@ async def get_data_from_park_id(park_id, region):
                 ogrn,
                 inn
                 )
-        yield data.to_dict()
-        logger.info('[+] Add to list')
+        yield asdict(data)
+        logger.info('[+] Transform data to dict')
 
 
-async def wright_to_file(data_to_dict, region):
+async def wright_to_file(data_to_dict, region) -> None:
     csv_res_path = environ['RESULTS_YA_TAXI_PARTNERS'] + f'{region}.csv'
 
     df = pd.DataFrame(columns=[
-                              'PARK_ID',
-                              'NAME',
-                              'FULL_NAME',
-                              'OGRN',
-                              'INN'
+                              'park_id',
+                              'name',
+                              'full_name',
+                              'ogrn',
+                              'inn'
                               ]
                       )
 
@@ -130,7 +133,7 @@ async def wright_to_file(data_to_dict, region):
         df = pd.concat([df, data_normalize], ignore_index=True)
 
         df_no_duplicates = df.drop_duplicates(
-                                            subset='PARK_ID',
+                                            subset='park_id',
                                             keep="first",
                                             ignore_index=True
                                             )

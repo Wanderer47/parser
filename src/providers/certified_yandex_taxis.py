@@ -1,5 +1,6 @@
 from os import environ
 from typing import Optional
+from dataclasses import asdict
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -12,7 +13,6 @@ from tasks import Analyzer
 
 logger = logging.getLogger(__name__)
 
-#REGIONS_LIST = ['moskva']
 REGIONS_FILE_NAME = 'certified_regions_list.txt'
 URL = 'https://pro.yandex.ru/ru-ru/{region}/knowledge-base/taxi/common/parks'
 with open('{regions_path}{regions_file_name}'.format(
@@ -26,7 +26,7 @@ async def certificate_taxi(add_in_the_file) -> None:
     logger.info('[+] Start certified taxi drivers parsing...')
 
     csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + 'all_partners.csv'
-    all_df = pd.DataFrame(columns=['REGION', 'NAME', 'PHONE', 'ADDRESS'])
+    all_df = pd.DataFrame(columns=['region', 'name', 'phone', 'address'])
 
     for region in REGIONS_LIST:
         df = await session_status_and_code(region)
@@ -77,6 +77,9 @@ async def add_in_the_file(content, region) -> pd.DataFrame:
 
     certificate_taxi_list = []
 
+    """
+    Select block with info about partner - div.accordion_accordion__7KkXQ
+    """
     for req in soup.select("div.accordion_accordion__7KkXQ"):
         company: Optional[str] = None
         phone: Optional[str] = None
@@ -89,10 +92,10 @@ async def add_in_the_file(content, region) -> pd.DataFrame:
                 req.select("p.body2.icon-list-item_text__jP3Nc")[2].string)
 
         cert_drivers = Certified_taxi_drivers(region, company, phone, addres)
-        certificate_taxi_list.append(cert_drivers.to_dict())
+        certificate_taxi_list.append(asdict(cert_drivers))
 
     df = pd.DataFrame(certificate_taxi_list,
-                      columns=['REGION', 'NAME', 'PHONE', 'ADDRESS'])
+                      columns=['region', 'name', 'phone', 'address'])
 
     logger.info('[+] Finish certified taxi drivers parsing...')
 
