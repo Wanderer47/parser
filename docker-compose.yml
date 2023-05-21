@@ -1,7 +1,10 @@
 version: "3.8"
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        - WRITE_LOGS_TO_FILE=True
     volumes:
       - ./results/certificate_taxi:/app/results/certificate_taxi
       - ./results/city_partners:/app/results/city_partners

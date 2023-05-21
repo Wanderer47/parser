@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import StaleElementReferenceException
 import pandas as pd
 
 from models import City_partners_organizatons
@@ -54,7 +55,11 @@ async def get_park_id_and_name(region) -> \
              )
 
         for park in park_links:
-            yield (park.get_attribute('href').split("/")[-1], park.text)
+            try:
+                yield (park.get_attribute('href').split("/")[-1], park.text)
+            except StaleElementReferenceException as state_ex:
+                logger.exception(f'[-] Selenium exception {str(state_ex)}')
+                break
 
         """
         We are waiting for the data to be sorted and parsed.
