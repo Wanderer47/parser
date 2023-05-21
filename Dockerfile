@@ -19,8 +19,7 @@ RUN mkdir -p $RESULTS_YA_TAXI_PARTNERS
 ENV PARSER_LOGS /app/logs/
 ARG WRITE_LOGS_TO_FILE
 ENV WRITE_LOGS_TO_FILE $WRITE_LOGS_TO_FILE
-RUN if [[$WRITE_LOGS_TO_FILE == True]]; then mkdir -p $PARSER_LOGS fi
-#RUN mkdir -p $PARSER_LOGS
+RUN mkdir -p $PARSER_LOGS
 
 # contains files with a list of regions
 ENV REGIONS /app/regions/

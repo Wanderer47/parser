@@ -1,9 +1,11 @@
 from os import environ
 from typing import Optional
 from dataclasses import asdict
+import time
 
-import aiohttp
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.by import By
 import pandas as pd
 import logging
 
@@ -22,14 +24,14 @@ with open('{regions_path}{regions_file_name}'.format(
     REGIONS_LIST = regions.read().split('\n')
 
 
-async def certificate_taxi(add_in_the_file) -> None:
+async def get_sert_partners(add_in_the_file) -> None:
     logger.info('[+] Start certified taxi drivers parsing...')
 
     csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + 'all_partners.csv'
     all_df = pd.DataFrame(columns=['region', 'name', 'phone', 'address'])
 
     for region in REGIONS_LIST:
-        df = await session_status_and_code(region)
+        df = await add_in_the_file(region)
         if df is not None:
             all_df = pd.concat([all_df, df], ignore_index=True)
 
@@ -52,44 +54,44 @@ async def certificate_taxi(add_in_the_file) -> None:
                                     )
 
 
-async def session_status_and_code(region) -> pd.DataFrame | None:
-    """Accessing the page until the html code of the page is received."""
-    async with aiohttp.ClientSession() as session:
-        async with session.get(URL.format(region=region)) as resp:
-            if int(resp.status) == 404:
-                logging.info(f'status 404: {region}')
-                df = None
-                return df
-            if len(resp.history) != 0 and int(resp.history[0].status) == 302:
-                logging.info(f'status 302: {region}')
-                df = None
-                return df
-            if int(resp.status) != 500:
-                content: str = await resp.text()
-                return await add_in_the_file(content, region)
-            else:
-                await session_status_and_code(region)
-
-
-async def add_in_the_file(content, region) -> pd.DataFrame:
-    """Work on html analysis and writing to a .csv file."""
-    soup = BeautifulSoup(content, 'lxml')
-
+async def add_in_the_file(region) -> pd.DataFrame:
     certificate_taxi_list = []
+
+    """ Initialization chrome webdriver. """
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    options.add_argument("window-size=1920x1080")
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-gpu')
+    driver = webdriver.Chrome(options=options)
+
+    """ Navigating to a page. """
+    driver.get(URL.format(region=region))
 
     """
     Select block with info about partner - div.accordion_accordion__7KkXQ
     """
-    for req in soup.select("div.accordion_accordion__7KkXQ"):
+    partners: list[WebElement] = driver.find_elements(
+                                    By.CLASS_NAME,
+                                    'accordion_accordion__7KkXQ'
+                                    )
+    for partner in partners:
         company: Optional[str] = None
         phone: Optional[str] = None
         addres: Optional[str] = None
 
-        company = str(req.select_one("p.body2").string)
-        phone = str(
-                req.select("p.body2.icon-list-item_text__jP3Nc")[1].string)
-        addres = str(
-                req.select("p.body2.icon-list-item_text__jP3Nc")[2].string)
+        title_elem: WebElement = partner.find_element(
+                                    By.CLASS_NAME,
+                                    'accordion_titleWrapper__2ogdZ'
+                                    )
+        company = title_elem.find_element(By.TAG_NAME, 'span').text
+        title_elem.click()
+        time.sleep(1)
+
+        text_elem: list[WebElement] = partner\
+            .find_elements(By.CLASS_NAME, 'body2.icon-list-item_text__jP3Nc')
+        phone = text_elem[1].find_element(By.TAG_NAME, 'span').text
+        addres = text_elem[2].find_element(By.TAG_NAME, 'span').text
 
         cert_drivers = Certified_taxi_drivers(region, company, phone, addres)
         certificate_taxi_list.append(asdict(cert_drivers))
@@ -100,3 +102,7 @@ async def add_in_the_file(content, region) -> pd.DataFrame:
     logger.info('[+] Finish certified taxi drivers parsing...')
 
     return df
+
+
+async def certificate_taxi() -> None:
+    await get_sert_partners(add_in_the_file)

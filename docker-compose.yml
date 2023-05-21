@@ -10,3 +10,4 @@ services:
       - ./results/city_partners:/app/results/city_partners
       - ./logs:/app/logs
       - ./regions:/app/regions
+    shm_size: '2gb'
