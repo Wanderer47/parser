@@ -69,7 +69,8 @@ async def add_in_the_file(region) -> pd.DataFrame:
     driver.get(URL.format(region=region))
 
     """
-    Select block with info about partner - div.accordion_accordion__7KkXQ
+    Select drop-down block with info about partner ->
+    div.accordion_accordion__7KkXQ
     """
     partners: list[WebElement] = driver.find_elements(
                                     By.CLASS_NAME,
@@ -85,11 +86,26 @@ async def add_in_the_file(region) -> pd.DataFrame:
                                     'accordion_titleWrapper__2ogdZ'
                                     )
         company = title_elem.find_element(By.TAG_NAME, 'span').text
-        title_elem.click()
-        time.sleep(1)
 
-        text_elem: list[WebElement] = partner\
-            .find_elements(By.CLASS_NAME, 'body2.icon-list-item_text__jP3Nc')
+        """
+        If drop-down list roll up then we click and open it
+        """
+        text_drop_down = partner.find_element(
+                                            By.CLASS_NAME,
+                                            'accordion_textWrapper__2l6lu'
+                                            )
+        get_drop_down_style = text_drop_down.get_attribute("style")
+        if get_drop_down_style != 'height: auto;':
+            title_elem.click()
+            time.sleep(1)
+
+        """
+        Geting the text from dorp-down list
+        """
+        text_elem: list[WebElement] = partner.find_elements(
+                                        By.CLASS_NAME,
+                                        'body2.icon-list-item_text__jP3Nc'
+                                        )
         phone = text_elem[1].find_element(By.TAG_NAME, 'span').text
         addres = text_elem[2].find_element(By.TAG_NAME, 'span').text
 
@@ -99,6 +115,7 @@ async def add_in_the_file(region) -> pd.DataFrame:
     df = pd.DataFrame(certificate_taxi_list,
                       columns=['region', 'name', 'phone', 'address'])
 
+    driver.close()
     logger.info('[+] Finish certified taxi drivers parsing...')
 
     return df
