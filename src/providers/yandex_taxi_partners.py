@@ -29,10 +29,12 @@ async def get_park_id_and_name(region) -> \
 
     """ Initialization chrome webdriver. """
     options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("window-size=1920x1080")
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-gpu')
+    options.add_argument("--headless")
+    options.add_argument("enable-automation")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--dns-prefetch-disable")
+    options.add_argument("--disable-gpu")
     driver = webdriver.Chrome(options=options)
 
     """ Navigating to a page. """

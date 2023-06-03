@@ -2,6 +2,7 @@ from os import environ
 from typing import Optional
 from dataclasses import asdict
 import time
+from random import uniform
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -30,10 +31,28 @@ async def get_sert_partners(add_in_the_file) -> None:
     csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + 'all_partners.csv'
     all_df = pd.DataFrame(columns=['region', 'name', 'phone', 'address'])
 
+    """ Initialization chrome webdriver. """
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("enable-automation")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--dns-prefetch-disable")
+    options.add_argument("--disable-gpu")
+
+    try:
+        driver = webdriver.Chrome(options=options)
+    except Exception as ex:
+        logger.info('===> driver exception')
+        logger.warning(ex)
+
     for region in REGIONS_LIST:
-        df = await add_in_the_file(region)
+        time.sleep(uniform(3.0, 15.0))
+        df = await add_in_the_file(region, driver)
         if df is not None:
             all_df = pd.concat([all_df, df], ignore_index=True)
+
+    driver.quit()
 
     all_df_no_duplicates = all_df.drop_duplicates(
                                         keep="first",
@@ -54,19 +73,15 @@ async def get_sert_partners(add_in_the_file) -> None:
                                     )
 
 
-async def add_in_the_file(region) -> pd.DataFrame:
+async def add_in_the_file(region, driver) -> pd.DataFrame:
     certificate_taxi_list = []
 
-    """ Initialization chrome webdriver. """
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("window-size=1920x1080")
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-gpu')
-    driver = webdriver.Chrome(options=options)
-
     """ Navigating to a page. """
-    driver.get(URL.format(region=region))
+    try:
+        driver.get(URL.format(region=region))
+    except Exception as ex:
+        logger.info('===> website exception')
+        logger.warning(ex)
 
     """
     Select drop-down block with info about partner ->
@@ -97,7 +112,7 @@ async def add_in_the_file(region) -> pd.DataFrame:
         get_drop_down_style = text_drop_down.get_attribute("style")
         if get_drop_down_style != 'height: auto;':
             title_elem.click()
-            time.sleep(1)
+            time.sleep(uniform(2.0, 10.0))
 
         """
         Geting the text from dorp-down list
@@ -115,8 +130,7 @@ async def add_in_the_file(region) -> pd.DataFrame:
     df = pd.DataFrame(certificate_taxi_list,
                       columns=['region', 'name', 'phone', 'address'])
 
-    driver.close()
-    logger.info('[+] Finish certified taxi drivers parsing...')
+    logger.info(f'[+] Finish {region} certified taxi drivers parsing...')
 
     return df
 
