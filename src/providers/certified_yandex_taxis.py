@@ -44,7 +44,7 @@ async def get_sert_partners(add_in_the_file) -> None:
         driver = webdriver.Chrome(options=options)
     except Exception as ex:
         logger.info('===> driver exception')
-        logger.warning(ex)
+        logger.warning(f'{ex}')
 
     for region in REGIONS_LIST:
         time.sleep(uniform(3.0, 15.0))
@@ -62,8 +62,13 @@ async def get_sert_partners(add_in_the_file) -> None:
     if all_df_no_duplicates is not None:
         open(csv_res_path, 'a').close()
 
-        analyzer = Analyzer(csv_res_path, all_df_no_duplicates, logger)
-        analyzer.get_differents()
+        analyzer_phone = Analyzer(
+                            csv_res_path,
+                            all_df_no_duplicates,
+                            'phone',
+                            logger
+                            )
+        analyzer_phone.get_differents()
 
         open(csv_res_path, 'w').close()
 
@@ -81,7 +86,7 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
         driver.get(URL.format(region=region))
     except Exception as ex:
         logger.info('===> website exception')
-        logger.warning(ex)
+        logger.warning(f'{ex}')
 
     """
     Select drop-down block with info about partner ->
@@ -135,5 +140,5 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
     return df
 
 
-async def certificate_taxi() -> None:
+async def start_certificate_taxi_scraping() -> None:
     await get_sert_partners(add_in_the_file)

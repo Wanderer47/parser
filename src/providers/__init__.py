@@ -1,2 +1,2 @@
-from .certified_yandex_taxis import certificate_taxi, add_in_the_file
-from .yandex_taxi_partners import start_parsing
+from .certified_yandex_taxis import start_certificate_taxi_scraping
+from .yandex_taxi_partners import start_ya_partners_scraping

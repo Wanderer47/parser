@@ -3,9 +3,10 @@ from pandas import DataFrame
 
 
 class Analyzer:
-    def __init__(self, old_file_path, df: DataFrame, logger):
+    def __init__(self, old_file_path, df: DataFrame, column, logger):
         self.old_file_path = old_file_path
         self.df = df
+        self.column = column
         self.logger = logger
 
     def get_differents(self):
@@ -30,9 +31,10 @@ class Analyzer:
 
         control_df = pd.concat([old_df, new_df], ignore_index=True)
         control_df_no_duplicates = control_df.drop_duplicates(
-                                                              keep="first",
-                                                              ignore_index=True
-                                                             )
+                                                            subset=self.column,
+                                                            keep="first",
+                                                            ignore_index=True
+                                                            )
 
         if control_df_no_duplicates is not None:
             new_partners_df = pd.concat(
@@ -43,6 +45,7 @@ class Analyzer:
                                              ignore_index=True
                                             )
             new_partners_df_no_duplicates = new_partners_df.drop_duplicates(
+                                             subset=self.column,
                                              keep=False,
                                              ignore_index=True
                                             )
@@ -51,12 +54,16 @@ class Analyzer:
                                          ignore_index=True
                                         )
             left_partners_df_no_duplicates = left_partners_df.drop_duplicates(
+                                             subset=self.column,
                                              keep=False,
                                              ignore_index=True
                                             )
 
-            new_file_path = self.old_file_path.split('.')[0] + '_new.csv'
-            left_file_path = self.old_file_path.split('.')[0] + '_left.csv'
+            new_file_path = self.old_file_path.split('.')[0] + \
+                f'_new_{self.column}.csv'
+
+            left_file_path = self.old_file_path.split('.')[0] + \
+                f'_left_{self.column}.csv'
 
             open(new_file_path, 'w').close()
             open(left_file_path, 'w').close()

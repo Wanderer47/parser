@@ -2,7 +2,8 @@ import asyncio
 import logging
 from os import environ
 
-from providers import certificate_taxi, start_parsing
+from providers import start_certificate_taxi_scraping, \
+                      start_ya_partners_scraping
 
 
 if environ['WRITE_LOGS_TO_FILE']:
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 async def main():
     try:
-        await certificate_taxi()
-        await start_parsing()
+        await start_certificate_taxi_scraping()
+        await start_ya_partners_scraping()
     except Exception as err:
         logger.exception(f"[-] Err starting app: {str(err)}")
 
