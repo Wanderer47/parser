@@ -142,9 +142,27 @@ async def get_data_from_park_id(park_id, region) -> \
                                         AsyncGenerator[dict[str, str], None]:
     async for park in park_id:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                    URL_PARK.format(region=region, park=park[0])) as resp:
-                content: str = await resp.text()
+            """
+            Вuring <time> we are trying to establish a connection,
+            in case of an exception.
+            """
+            timer = 0
+            while True:
+                try:
+                    async with session.get(
+                            URL_PARK.format(region=region, park=park[0])
+                                          ) as resp:
+                        content: str = await resp.text()
+                    break
+                except Exception as ex:
+                    logger.warn(ex)
+                    pass
+
+                if timer == 300:
+                    break
+                else:
+                    timer += 60
+                    time.sleep(timer)
 
         soup = BeautifulSoup(content, 'lxml')
 
@@ -156,13 +174,16 @@ async def get_data_from_park_id(park_id, region) -> \
         organization_name = park[1]
 
         for req in soup.select('div.HeaderInfo__details'):
-            organization_full_name = req.select('span')[0].text
+            if len(req.select('span')) != 0:
+                organization_full_name = req.select('span')[0].text
 
-            for info_tag in req.select('span'):
-                if (info_tag.text.split(maxsplit=1)[0] == 'ОГРН:'):
-                    ogrn = info_tag.text.split(maxsplit=1)[1]
-                elif (info_tag.text.split(maxsplit=1)[0] == 'ИНН:'):
-                    inn = info_tag.text.split(maxsplit=1)[1]
+                for info_tag in req.select('span'):
+                    if (info_tag.text.split(maxsplit=1)[0] == 'ОГРН:'):
+                        ogrn = info_tag.text.split(maxsplit=1)[1]
+                    elif (info_tag.text.split(maxsplit=1)[0] == 'ИНН:'):
+                        inn = info_tag.text.split(maxsplit=1)[1]
+            else:
+                logger.info('===> Get empty data list from page.')
 
         data = City_partners_organizatons(
                 organization_id,
@@ -204,7 +225,12 @@ async def wright_to_file(data_to_dict, region) -> None:
         open(csv_res_path, 'a').close()
         logger.info('[+] Created .csv file')
 
-        analyzer = Analyzer(csv_res_path, df_no_duplicates, 'park_id', logger)
+        analyzer = Analyzer(
+                            old_file_path=csv_res_path,
+                            df=df_no_duplicates,
+                            column='park_id',
+                            logger=logger
+                            )
         analyzer.get_differents()
 
         open(csv_res_path, 'w').close()  # Clearing .csv file

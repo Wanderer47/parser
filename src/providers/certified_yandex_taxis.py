@@ -43,8 +43,8 @@ async def get_sert_partners(add_in_the_file) -> None:
     try:
         driver = webdriver.Chrome(options=options)
     except Exception as ex:
-        logger.info('===> driver exception')
-        logger.warning(f'{ex}')
+        logger.warn('===> driver exception')
+        logger.warn(f'{ex}')
 
     for region in REGIONS_LIST:
         time.sleep(uniform(3.0, 15.0))
@@ -63,10 +63,10 @@ async def get_sert_partners(add_in_the_file) -> None:
         open(csv_res_path, 'a').close()
 
         analyzer_phone = Analyzer(
-                            csv_res_path,
-                            all_df_no_duplicates,
-                            'phone',
-                            logger
+                            old_file_path=csv_res_path,
+                            df=all_df_no_duplicates,
+                            column='phone',
+                            logger=logger
                             )
         analyzer_phone.get_differents()
 
@@ -86,7 +86,7 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
         driver.get(URL.format(region=region))
     except Exception as ex:
         logger.info('===> website exception')
-        logger.warning(f'{ex}')
+        logger.warn(f'{ex}')
 
     """
     Select drop-down block with info about partner ->
