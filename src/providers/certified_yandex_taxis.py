@@ -25,13 +25,20 @@ with open('{regions_path}{regions_file_name}'.format(
     REGIONS_LIST = regions.read().split('\n')
 
 
-async def get_sert_partners(add_in_the_file) -> None:
+async def get_sert_partners(get_data_frame_from_region) -> None:
+    """ Runs the Analyzer and writes the data to a file.
+
+    Args:
+        get_data_frame_from_region: The get_sert_partners is decorator function
+            receiving an input function get_data_frame_from_region, that
+            returns a DataFrame with data about the partners of this region.
+    """
     logger.info('[+] Start certified taxi drivers parsing...')
 
     csv_res_path = environ['RESULTS_CERT_YA_TAXIS'] + 'all_partners.csv'
     all_df = pd.DataFrame(columns=['region', 'name', 'phone', 'address'])
 
-    """ Initialization chrome webdriver. """
+    # Initialization chrome webdriver.
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     options.add_argument("enable-automation")
@@ -43,13 +50,15 @@ async def get_sert_partners(add_in_the_file) -> None:
     try:
         driver = webdriver.Chrome(options=options)
     except Exception as ex:
-        logger.warn('===> driver exception')
-        logger.warn(f'{ex}')
+        logger.warning(f'!!! {ex}')
 
     for region in REGIONS_LIST:
         time.sleep(uniform(3.0, 15.0))
-        df = await add_in_the_file(region, driver)
+        # Get DataFrame with information about the partners of this region.
+        df = await get_data_frame_from_region(region, driver)
         if df is not None:
+            # Combine the received DF with the DF from
+            # the previous ones regions.
             all_df = pd.concat([all_df, df], ignore_index=True)
 
     driver.quit()
@@ -60,6 +69,7 @@ async def get_sert_partners(add_in_the_file) -> None:
                                         )
 
     if all_df_no_duplicates is not None:
+        # Create a file if it has not been created before.
         open(csv_res_path, 'a').close()
 
         analyzer_phone = Analyzer(
@@ -70,28 +80,42 @@ async def get_sert_partners(add_in_the_file) -> None:
                             )
         analyzer_phone.get_differents()
 
+        # Delete old file contents.
         open(csv_res_path, 'w').close()
 
+        # Write new data to a .csv file.
         all_df_no_duplicates.to_csv(
                                     path_or_buf=csv_res_path,
                                     index=False
                                     )
 
 
-async def add_in_the_file(region, driver) -> pd.DataFrame:
+async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
+    """ Parse data from websait.
+
+    Args:
+        region: The city whose data we are parsing.
+        driver:
+
+    Returns:
+        Returns a DataFrame containing all the data of this city.
+
+        City data:
+            region: The city whose data we are parsing.
+            name: Name of the partner.
+            phone: Partner's phone number.
+            address: Partner's address.
+    """
     certificate_taxi_list = []
 
-    """ Navigating to a page. """
     try:
+        # Navigating to a page.
         driver.get(URL.format(region=region))
     except Exception as ex:
-        logger.info('===> website exception')
-        logger.warn(f'{ex}')
+        logger.warning(f'!!! {ex}')
 
-    """
-    Select drop-down block with info about partner ->
-    div.accordion_accordion__7KkXQ
-    """
+    # We get a list WebElement containing info about partner ->
+    # <div class="accordion_accordion__7KkXQ">
     partners: list[WebElement] = driver.find_elements(
                                     By.CLASS_NAME,
                                     'accordion_accordion__7KkXQ'
@@ -101,15 +125,21 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
         phone: Optional[str] = None
         addres: Optional[str] = None
 
+        # We get WebElement containing partner name ->
+        # <div class="accordion_titleWrapper__2ogdZ">
+        #   ...
+        #       <span>partner_name</span>
         title_elem: WebElement = partner.find_element(
                                     By.CLASS_NAME,
                                     'accordion_titleWrapper__2ogdZ'
                                     )
         company = title_elem.find_element(By.TAG_NAME, 'span').text
 
-        """
-        If drop-down list roll up then we click and open it
-        """
+        # If drop-down list roll up then we click and open it ->
+        # <div class="accordion_textWrapper__2l6lu" style="height: 0px;">
+        #
+        # "height: 0px;" - roll up drop-down
+        # "height: auto;" - roll down drop-down
         text_drop_down = partner.find_element(
                                             By.CLASS_NAME,
                                             'accordion_textWrapper__2l6lu'
@@ -119,9 +149,12 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
             title_elem.click()
             time.sleep(uniform(2.0, 10.0))
 
-        """
-        Geting the text from dorp-down list
-        """
+        # Geting list WebElement containing the necessary data from
+        # the partner ->
+        # <div class="accordion_textWrapper__2l6lu" style="height: auto;">
+        #   ...
+        #       <p class="body2 icon-list-item_text__jP3Nc">
+        #           <span>necessary_data</span>
         text_elem: list[WebElement] = partner.find_elements(
                                         By.CLASS_NAME,
                                         'body2.icon-list-item_text__jP3Nc'
@@ -129,9 +162,12 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
         phone = text_elem[1].find_element(By.TAG_NAME, 'span').text
         addres = text_elem[2].find_element(By.TAG_NAME, 'span').text
 
+        # Wrap the data in a model, then add it to the certificate_taxi_list
+        # in the form of a dictionary.
         cert_drivers = Certified_taxi_drivers(region, company, phone, addres)
         certificate_taxi_list.append(asdict(cert_drivers))
 
+    # Converting a list with data to DataFrame.
     df = pd.DataFrame(certificate_taxi_list,
                       columns=['region', 'name', 'phone', 'address'])
 
@@ -141,4 +177,4 @@ async def add_in_the_file(region, driver) -> pd.DataFrame:
 
 
 async def start_certificate_taxi_scraping() -> None:
-    await get_sert_partners(add_in_the_file)
+    await get_sert_partners(get_data_frame_from_region)

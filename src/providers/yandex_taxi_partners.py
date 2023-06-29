@@ -54,8 +54,24 @@ API_HEADERS = {
 
 async def get_park_id_and_name_api(region) -> \
                                         AsyncGenerator[tuple[str, str], None]:
+    """ Get a list of partners and their ID.
+
+    Parses the list of partners and their IDs using the API.
+
+    Args:
+        region: The city whose data is parsed.
+
+    Returns:
+        Asynchronous generator containing a tuple of the ID of the park
+        and the name of the partner.
+
+        Tuple:
+            park["parkid"]: ID of the park.
+            park["name"]: The name of the partner.
+    """
     logger.info('[+] Start city partners parsing...')
 
+    # Page counter, default value -> 0
     page_number = 0
     while True:
         time.sleep(uniform(1.0, 5.0))
@@ -65,87 +81,45 @@ async def get_park_id_and_name_api(region) -> \
                                     data=API_PAYLOAD
                                     )
 
+        # The API returns json. Deserialize it to a Python object.
         data = json.loads(response.text)
 
+        # If object is empty, exit form loop.
         if len(data["parks"]) == 0:
             break
         else:
             page_number += 1
 
+        # Get data from json.
         park_links = (park for park in data["parks"])
         for park in park_links:
             yield (park["parkid"], park["name"])
 
 
-async def get_park_id_and_name_selenium(region) -> \
-                                        AsyncGenerator[tuple[str, str], None]:
-    logger.info('[+] Start city partners parsing...')
-
-    """ Initialization chrome webdriver. """
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("enable-automation")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--dns-prefetch-disable")
-    options.add_argument("--disable-gpu")
-    driver = webdriver.Chrome(options=options)
-
-    """ Navigating to a page. """
-    driver.get(URL_REGION.format(region=region))
-    time.sleep(uniform(2.0, 3.0))
-
-    scroll_bar_element = driver.find_element(by=By.CLASS_NAME,
-                                             value="ParkList__list")
-
-    pre_height = 0
-    new_height = 0
-
-    while True:
-        """ Getting park links from a submerged scrollbar. """
-        park_links: Generator[WebElement, None, None] = \
-            (park for park in driver.find_elements(
-                                                by=By.CLASS_NAME,
-                                                value="Park__link"
-                                                   )
-             )
-
-        for park in park_links:
-            try:
-                yield (park.get_attribute('href').split("/")[-1], park.text)
-            except StaleElementReferenceException as state_ex:
-                logger.exception(f'[-] Selenium exception {str(state_ex)}')
-                break
-
-        """
-        We are waiting for the data to be sorted and parsed.
-        After that we scroll the scroll bar of the site.
-        """
-        time.sleep(uniform(1.0, 2.0))
-        driver.execute_script(
-                "arguments[0].scrollTop = arguments[0].scrollHeight",
-                scroll_bar_element)
-        new_height = driver.execute_script(
-                "return arguments[0].scrollHeight", scroll_bar_element)
-        if pre_height < new_height:
-            pre_height = driver.execute_script(
-                    "return arguments[0].scrollHeight",
-                    scroll_bar_element)
-        else:
-            logger.info('[+] Finish city partners parsing...')
-            break
-
-    driver.close()
-
-
-async def get_data_from_park_id(park_id, region) -> \
+async def get_data_from_park_id(park_id_and_name, region) -> \
                                         AsyncGenerator[dict[str, str], None]:
-    async for park in park_id:
+    """ Get data about partner.
+
+    Args:
+        park_id_and_name: Asynchronous generator containing a tuple of the
+            ID of the park and the name of the partner.
+        region: The city whose data is parsed.
+
+    Returns:
+        Asynchronous generator containing dict vith data.
+
+        Data:
+            organization_id: ID of the park.
+            organization_name: The name of the partner.
+            organization_full_name: The full name of the partner.
+            ogrn: Main state registration number.
+            inn: Taxpayer identification number.
+    """
+
+    async for park in park_id_and_name:
         async with aiohttp.ClientSession() as session:
-            """
-            Вuring <time> we are trying to establish a connection,
-            in case of an exception.
-            """
+            # If an exception occurs, we try to establish a connection.
+            # The timer is the time after which we try to reconnect.
             timer = 0
             while True:
                 try:
@@ -164,6 +138,7 @@ async def get_data_from_park_id(park_id, region) -> \
                     timer += 60
                     time.sleep(timer)
 
+        # Use bs4 to parsing received HTML document.
         soup = BeautifulSoup(content, 'lxml')
 
         organization_full_name: Optional[str] = None
@@ -173,18 +148,22 @@ async def get_data_from_park_id(park_id, region) -> \
         organization_id = park[0]
         organization_name = park[1]
 
+        # Search for data in html ->
+        # <div class="HeaderInfo__details">
         for req in soup.select('div.HeaderInfo__details'):
             if len(req.select('span')) != 0:
                 organization_full_name = req.select('span')[0].text
 
+                # Search by the first word.
                 for info_tag in req.select('span'):
                     if (info_tag.text.split(maxsplit=1)[0] == 'ОГРН:'):
                         ogrn = info_tag.text.split(maxsplit=1)[1]
                     elif (info_tag.text.split(maxsplit=1)[0] == 'ИНН:'):
                         inn = info_tag.text.split(maxsplit=1)[1]
             else:
-                logger.info('===> Get empty data list from page.')
+                logger.info('!!! Get empty data list from page.')
 
+        # Wrap the data in a model and converting to dict.
         data = City_partners_organizatons(
                 organization_id,
                 organization_name,
@@ -193,10 +172,16 @@ async def get_data_from_park_id(park_id, region) -> \
                 inn
                 )
         yield asdict(data)
-        logger.info('[+] Transform data to dict')
 
 
 async def wright_to_file(data_to_dict, region) -> None:
+    """ Wrigth data to file.
+
+    Args:
+        data_to_dict: Asynchronous generator containing dict vith data.
+        region: The city whose data is parsed.
+    """
+
     csv_res_path = environ['RESULTS_YA_TAXI_PARTNERS'] + f'{region}.csv'
 
     df = pd.DataFrame(columns=[
@@ -212,6 +197,7 @@ async def wright_to_file(data_to_dict, region) -> None:
     async for data in data_to_dict:
         data_normalize = pd.json_normalize(data)
 
+        # Combining data.
         df = pd.concat([df, data_normalize], ignore_index=True)
 
         df_no_duplicates = df.drop_duplicates(
@@ -221,7 +207,7 @@ async def wright_to_file(data_to_dict, region) -> None:
                                             )
 
     if df_no_duplicates is not None:
-        # If there is no .csv file, then we create it
+        # Create a file if it has not been created before.
         open(csv_res_path, 'a').close()
         logger.info('[+] Created .csv file')
 
@@ -233,23 +219,17 @@ async def wright_to_file(data_to_dict, region) -> None:
                             )
         analyzer.get_differents()
 
-        open(csv_res_path, 'w').close()  # Clearing .csv file
+        # Delete old file contents.
+        open(csv_res_path, 'w').close()
+
+        # Write new data to a .csv file.
         df_no_duplicates.to_csv(path_or_buf=csv_res_path, index=False)
     else:
         logger.info('[+] Empty DataFrame')
 
 
 async def start_ya_partners_scraping() -> None:
-    '''
-    If you want to get an park_id_and_name using the api then set <True>
-    else set <False>
-    '''
-    park_id_and_name_api = True
-
     for region in REGIONS_LIST:
-        if park_id_and_name_api:
-            park_id_and_name = get_park_id_and_name_api(region)
-        else:
-            park_id_and_name = get_park_id_and_name_selenium(region)
+        park_id_and_name = get_park_id_and_name_api(region)
         data = get_data_from_park_id(park_id_and_name, region)
         await wright_to_file(data, region)
