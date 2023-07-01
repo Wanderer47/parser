@@ -21,17 +21,17 @@ ARG WRITE_LOGS_TO_FILE
 ENV WRITE_LOGS_TO_FILE $WRITE_LOGS_TO_FILE
 RUN mkdir -p $PARSER_LOGS
 
-# contains files with a list of regions
+# Contains files with a list of regions.
 ENV REGIONS /app/regions/
 RUN mkdir -p $REGIONS
 
-# install google chrome
+# Install google chrome.
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
 RUN apt-get -y update
 RUN apt-get install -y google-chrome-stable
 
-# install chromedriver
+# Install chromedriver.
 RUN apt-get install -yqq unzip
 RUN wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`/chromedriver_linux64.zip
 RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
