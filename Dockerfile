@@ -1,7 +1,6 @@
 FROM python:3.10
 
 WORKDIR /app
-ENV PYTHONPATH=/app/src
 RUN mkdir -p src/
 
 COPY requirements.txt requirements.txt
