@@ -1,3 +1,5 @@
+This program collects a list of Yandex taxi partners.
+
 Build docker-compose
 ------------------------
 ``` docker-compose build ```
@@ -31,6 +33,28 @@ yandex_taxi_partners.py, receiveng data from the
 ``` ./regions:/app/regions ``` 
 <--- directory containing files with cities for parsing
 
-Args:
+Args
+------------
 ``` WRITE_LOGS_TO_FILE ``` <--- If you want to write a log to a file 
 select True otherwise False
+
+Environments
+-------------
+``` RESULTS_CERT_YA_TAXIS ``` 
+<--- the directory containing the files with the results of the script 
+certified_yandex_taxis.py
+
+``` RESULTS_YA_TAXI_PARTNERS ``` 
+<--- the directory containing the files with the results of the script 
+yandex_taxi_partners.py
+
+``` WRITE_LOGS_TO_FILE ``` 
+<--- if you want to write a log to a file select True otherwise False 
+set in Args.
+
+
+``` PARSER_LOGS ``` 
+<--- the path to the folder containing file with log
+
+``` REGIONS ``` 
+<--- the path to the folder containing files with cities
