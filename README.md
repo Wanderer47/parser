@@ -1,3 +1,5 @@
+This program collects a list of Yandex taxi partners.
+
 Build docker-compose
 ------------------------
 ``` docker-compose build ```
