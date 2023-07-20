@@ -3,6 +3,7 @@ from typing import Optional
 from dataclasses import asdict
 from random import uniform
 import asyncio
+import time
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -122,16 +123,26 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
 
     try:
         # Navigating to a page.
+        t_s = time.time()
         driver.get(URL.format(region=region))
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning(f'driver.get ===> {d}')
     except Exception as ex:
         logger.warning(f'!!! {ex}')
 
     # We get a list WebElement containing info about partner ->
     # <div class="accordion_accordion__7KkXQ">
+    t_s = time.time()
     partners: list[WebElement] = driver.find_elements(
                                     By.CLASS_NAME,
                                     'accordion_accordion__7KkXQ'
                                     )
+    t_e = time.time()
+    d = t_e - t_s
+    logger.warning('partners: driver.find_elements ' +
+                f'(accordion_accordion__7KkXQ) ===> {d}')
+
     for partner in partners:
         company: Optional[str] = None
         phone: Optional[str] = None
@@ -141,22 +152,43 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
         # <div class="accordion_titleWrapper__2ogdZ">
         #   ...
         #       <span>partner_name</span>
+        t_s = time.time()
         title_elem: WebElement = partner.find_element(
                                     By.CLASS_NAME,
                                     'accordion_titleWrapper__2ogdZ'
                                     )
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning(f'title_elem: driver.find_elements \
+                (accordion_titleWrapper__2ogdZ) ===> {d}')
+
+        t_s = time.time()
         company = title_elem.find_element(By.TAG_NAME, 'span').text
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning(f'company: driver.find_elements (span) ===> {d}')
 
         # If drop-down list roll up then we click and open it ->
         # <div class="accordion_textWrapper__2l6lu" style="height: 0px;">
         #
         # "height: 0px;" - roll up drop-down
         # "height: auto;" - roll down drop-down
+        t_s = time.time()
         text_drop_down = partner.find_element(
                                             By.CLASS_NAME,
                                             'accordion_textWrapper__2l6lu'
                                             )
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning('text_drop_down: driver.find_elements ' +
+                    f'(accordion_textWrapper__2l6lu) ===> {d}')
+
+        t_s = time.time()
         get_drop_down_style = text_drop_down.get_attribute("style")
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning('get_drop_down_style: text_drop_down.get_attribute ' +
+                    f'(style) ===> {d}')
         if get_drop_down_style != 'height: auto;':
             title_elem.click()
             # Delay in loading clicks on the site field.
@@ -168,12 +200,29 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
         #   ...
         #       <p class="body2 icon-list-item_text__jP3Nc">
         #           <span>necessary_data</span>
+        t_s = time.time()
         text_elem: list[WebElement] = partner.find_elements(
                                         By.CLASS_NAME,
                                         'body2.icon-list-item_text__jP3Nc'
                                         )
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning('text_elem: partner.find_elements ' +
+                    f'(body2.icon-list-item_text__jP3Nc) ===> {d}')
+
+        t_s = time.time()
         phone = text_elem[1].find_element(By.TAG_NAME, 'span').text
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning('phone: text_elem[1].find_element ' +
+                    f'(span) ===> {d}')
+
+        t_s = time.time()
         addres = text_elem[2].find_element(By.TAG_NAME, 'span').text
+        t_e = time.time()
+        d = t_e - t_s
+        logger.warning('addres: text_elem[2].find_element ' +
+                    f'(span) ===> {d}')
 
         # Wrap the data in a model, then add it to the certificate_taxi_list
         # in the form of a dictionary.
