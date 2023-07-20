@@ -141,7 +141,7 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
     t_e = time.time()
     d = t_e - t_s
     logger.warning('partners: driver.find_elements ' +
-                f'(accordion_accordion__7KkXQ) ===> {d}')
+                   f'(accordion_accordion__7KkXQ) ===> {d}')
 
     for partner in partners:
         company: Optional[str] = None
@@ -159,14 +159,14 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
                                     )
         t_e = time.time()
         d = t_e - t_s
-        logger.warning(f'title_elem: driver.find_elements \
+        logger.warning(f'title_elem: partner.find_elements \
                 (accordion_titleWrapper__2ogdZ) ===> {d}')
 
         t_s = time.time()
         company = title_elem.find_element(By.TAG_NAME, 'span').text
         t_e = time.time()
         d = t_e - t_s
-        logger.warning(f'company: driver.find_elements (span) ===> {d}')
+        logger.warning(f'company: title_elem.find_elements (span) ===> {d}')
 
         # If drop-down list roll up then we click and open it ->
         # <div class="accordion_textWrapper__2l6lu" style="height: 0px;">
@@ -180,49 +180,90 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
                                             )
         t_e = time.time()
         d = t_e - t_s
-        logger.warning('text_drop_down: driver.find_elements ' +
-                    f'(accordion_textWrapper__2l6lu) ===> {d}')
+        logger.warning('text_drop_down: partner.find_elements ' +
+                       f'(accordion_textWrapper__2l6lu) ===> {d}')
 
         t_s = time.time()
         get_drop_down_style = text_drop_down.get_attribute("style")
         t_e = time.time()
         d = t_e - t_s
         logger.warning('get_drop_down_style: text_drop_down.get_attribute ' +
-                    f'(style) ===> {d}')
+                       f'(style) ===> {d}')
         if get_drop_down_style != 'height: auto;':
             title_elem.click()
             # Delay in loading clicks on the site field.
             await asyncio.sleep(2)
 
-        # Geting list WebElement containing the necessary data from
-        # the partner ->
-        # <div class="accordion_textWrapper__2l6lu" style="height: auto;">
-        #   ...
-        #       <p class="body2 icon-list-item_text__jP3Nc">
-        #           <span>necessary_data</span>
+        # We get list WebElement containing all data from the parnter ->
+        # <div class="margin-bottom-8 icon-list-item_wrapper__3Nm2I">
         t_s = time.time()
-        text_elem: list[WebElement] = partner.find_elements(
-                                        By.CLASS_NAME,
-                                        'body2.icon-list-item_text__jP3Nc'
-                                        )
+        partner_elements = partner.find_elements(
+                                By.CLASS_NAME,
+                                'margin-bottom-8.icon-list-item_wrapper__3Nm2I'
+                                )
         t_e = time.time()
         d = t_e - t_s
-        logger.warning('text_elem: partner.find_elements ' +
-                    f'(body2.icon-list-item_text__jP3Nc) ===> {d}')
-
-        t_s = time.time()
-        phone = text_elem[1].find_element(By.TAG_NAME, 'span').text
-        t_e = time.time()
-        d = t_e - t_s
-        logger.warning('phone: text_elem[1].find_element ' +
-                    f'(span) ===> {d}')
-
-        t_s = time.time()
-        addres = text_elem[2].find_element(By.TAG_NAME, 'span').text
-        t_e = time.time()
-        d = t_e - t_s
-        logger.warning('addres: text_elem[2].find_element ' +
-                    f'(span) ===> {d}')
+        logger.warning('partner_elements: partner.find_elements ' +
+                   f'(margin-bottom-8.icon-list-item_wrapper__3Nm2I) ===> {d}')
+        for parnter_elem in partner_elements:
+            # <div class="margin-bottom-8 icon-list-item_wrapper__3Nm2I">
+            #   <p class="caption1 icon-list-item_captionText__1rrVe">
+            t_s = time.time()
+            elem = parnter_elem.find_element(
+                                By.CLASS_NAME,
+                                'caption1.icon-list-item_captionText__1rrVe'
+                                )
+            t_e = time.time()
+            d = t_e - t_s
+            logger.warning('elem: parnter_elem.find_elements ' +
+                      f'(caption1.icon-list-item_captionText__1rrVe) ===> {d}')
+            # We get name field with data ->
+            # <div class="margin-bottom-8 icon-list-item_wrapper__3Nm2I">
+            #   <p class="caption1 icon-list-item_captionText__1rrVe">
+            #       <span>field_name</span>
+            t_s = time.time()
+            field_name = elem.find_element(By.TAG_NAME, 'span').text
+            t_e = time.time()
+            d = t_e - t_s
+            logger.warning('field_name: elem.find_element ' +
+                           f'(span) ===> {d}')
+            if field_name == 'Номер телефона':
+                # <div class="margin-bottom-8 icon-list-item_wrapper__3Nm2I">
+                #   <p class="body2 icon-list-item_text__jP3Nc">
+                t_s = time.time()
+                data_elem = parnter_elem.find_element(
+                                By.CLASS_NAME,
+                                'body2.icon-list-item_text__jP3Nc'
+                                )
+                t_e = time.time()
+                d = t_e - t_s
+                logger.warning('data_elem: parnter_elem.find_element ' +
+                               f'(body2.icon-list-item_text__jP3Nc) ===> {d}')
+                # We get necessary data from the corresponding field ->
+                # <div class="margin-bottom-8 icon-list-item_wrapper__3Nm2I">
+                #   <p class="body2 icon-list-item_text__jP3Nc">
+                #       <span>necessary_data</span>
+                t_s = time.time()
+                phone = data_elem.find_element(By.TAG_NAME, 'span').text
+                t_e = time.time()
+                d = t_e - t_s
+                logger.warning('phone: data_elem.find_element ' +
+                               f'(span) ===> {d}')
+            elif field_name == 'Адрес':
+                t_s = time.time()
+                data_elem = parnter_elem.find_element(
+                                By.CLASS_NAME,
+                                'body2.icon-list-item_text__jP3Nc'
+                                )
+                t_e = time.time()
+                d = t_e - t_s
+                logger.warning('data_elem: parnter_elem.find_element ' +
+                               f'(body2.icon-list-item_text__jP3Nc) ===> {d}')
+                addres = data_elem.find_element(By.TAG_NAME, 'span').text
+                t_e = time.time()
+                d = t_e - t_s
+                logger.warning('addres: data_elem.find_element ' +
+                               f'(span) ===> {d}')
 
         # Wrap the data in a model, then add it to the certificate_taxi_list
         # in the form of a dictionary.
