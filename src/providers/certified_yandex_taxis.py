@@ -1,14 +1,15 @@
 from os import environ
 from typing import Optional
 from dataclasses import asdict
-import time
 from random import uniform
+import asyncio
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 import pandas as pd
 import logging
+import aiohttp
 
 from models import Certified_taxi_drivers
 from tasks import Analyzer
@@ -53,13 +54,24 @@ async def get_sert_partners(get_data_frame_from_region) -> None:
         logger.warning(f'!!! {ex}')
 
     for region in REGIONS_LIST:
-        time.sleep(uniform(3.0, 15.0))
-        # Get DataFrame with information about the partners of this region.
-        df = await get_data_frame_from_region(region, driver)
-        if df is not None:
-            # Combine the received DF with the DF from
-            # the previous ones regions.
-            all_df = pd.concat([all_df, df], ignore_index=True)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(URL.format(region=region)) as resp:
+                if int(resp.status) == 404:
+                    logger.info(f'status 404: {region}')
+                elif len(resp.history) != 0 and \
+                        int(resp.history[0].status) == 302:
+                    logger.info(f'status 302: {region}')
+                else:
+                    # A delay that mimics the user's behavior when switching to
+                    # another site.
+                    await asyncio.sleep(uniform(1.0, 10.0))
+                    # Get DataFrame with information about the partners of
+                    # this region.
+                    df = await get_data_frame_from_region(region, driver)
+                    if df is not None:
+                        # Combine the received DF with the DF from
+                        # the previous ones regions.
+                        all_df = pd.concat([all_df, df], ignore_index=True)
 
     driver.quit()
 
@@ -147,7 +159,8 @@ async def get_data_frame_from_region(region, driver) -> pd.DataFrame:
         get_drop_down_style = text_drop_down.get_attribute("style")
         if get_drop_down_style != 'height: auto;':
             title_elem.click()
-            time.sleep(uniform(2.0, 10.0))
+            # Delay in loading clicks on the site field.
+            await asyncio.sleep(2)
 
         # Geting list WebElement containing the necessary data from
         # the partner ->

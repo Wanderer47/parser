@@ -1,18 +1,14 @@
-import time
 from random import uniform
-from typing import Optional, Generator, AsyncGenerator
+from typing import Optional, AsyncGenerator
 import logging
 from os import environ
 from dataclasses import asdict
 import json
+import asyncio
 
 import aiohttp
 import requests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import StaleElementReferenceException
 import pandas as pd
 
 from models import City_partners_organizatons
@@ -74,7 +70,8 @@ async def get_park_id_and_name_api(region) -> \
     # Page counter, default value -> 0
     page_number = 0
     while True:
-        time.sleep(uniform(1.0, 5.0))
+        # A delay that mimics the user's behavior when switching to other page.
+        await asyncio.sleep(uniform(1.0, 5.0))
         response = requests.request("POST",
                                     API_URL.format(page_number=page_number),
                                     headers=API_HEADERS,
@@ -136,7 +133,7 @@ async def get_data_from_park_id(park_id_and_name, region) -> \
                     break
                 else:
                     timer += 60
-                    time.sleep(timer)
+                    await asyncio.sleep(timer)
 
         # Use bs4 to parsing received HTML document.
         soup = BeautifulSoup(content, 'lxml')
